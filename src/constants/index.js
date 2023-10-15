@@ -1,7 +1,4 @@
-// export const apiKey = 'place your openAI api key here';
-// in some cases your api key maybe already expired
-// try to use a new account to create an api key
-
+export const apiKey = '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';
 export const dummyMessages = [
     {
         role: 'user', 
