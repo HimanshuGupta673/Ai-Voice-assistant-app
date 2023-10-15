@@ -1,4 +1,4 @@
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { dummyMessages } from '../constants';
 import Voice from '@react-native-community/voice';
 import { apiCall } from '../api/OpenAi';
 import { useRef } from 'react';
-// import {Gif} from 'react-native-gif'
+import Tts from 'react-native-tts';
 const HomeScreen = () => {
   const [messages, setMessages] = useState(dummyMessages);
   const [recording, setRecording] = useState(false);
@@ -18,8 +18,10 @@ const HomeScreen = () => {
 
   const clear = () => {
     setMessages([]);
+    // Tts.stop();
   }
   const stopSpeaking = () => {
+    // Tts.stop()
     setSpeaking(false)
   }
 
@@ -64,15 +66,13 @@ const HomeScreen = () => {
 
   const fetchResponse = async () => {
     if (result.trim().length > 0) {
-      // setLoading(true);
+      setLoading(true);
       let newMessages = [...messages];
       newMessages.push({ role: 'user', content: result.trim() });
       setMessages([...newMessages]);
 
-      // scroll to the bottom of the view
       updateScrollView();
       setLoading(true);
-      // fetching response from chatGPT with our prompt and old messages
       apiCall(result.trim(), newMessages)
         .then((res) => {
           // console.log('got api data', res);
@@ -82,8 +82,7 @@ const HomeScreen = () => {
             setResult('');
             updateScrollView();
             // now play the response to user
-            // startTextToSpeach(res.data[res.data.length-1]);
-
+            startTextToSpeech(res.data[res.data.length-1]);
           } else {
             Alert.alert('Error', res.msg);
           }
@@ -92,9 +91,6 @@ const HomeScreen = () => {
         .catch((error) => {
           console.error('An error occurred:', error);
         });
-
-      // setLoading(false);
-
     }
   }
 
@@ -106,16 +102,21 @@ const HomeScreen = () => {
     }, 200)
   }
 
-  // const startTextToSpeach = message=>{
-  //   if(!message.content.includes('https')){
-  //     setSpeaking(true);
-  //     // playing response with the voice id and voice speed
-  //     Tts.speak(message.content, {
-  //       iosVoiceId: 'com.apple.ttsbundle.Samantha-compact',
-  //       rate: 0.5,
-  //     });
-  //   }
-  // }
+  const startTextToSpeech = message => {
+    if (!message.content.includes('https')) {
+      setSpeaking(true);
+      const androidParams = {
+        KEY_PARAM_PAN: -1,
+        KEY_PARAM_VOLUME: 0.5,
+        KEY_PARAM_STREAM: 'STREAM_MUSIC', 
+      };
+      Tts.speak(message.content, {
+        androidParams,
+        rate: 0.5,
+      });
+    }
+  };
+  
 
 
   useEffect(() => {
@@ -128,9 +129,9 @@ const HomeScreen = () => {
 
     // text to speech events
     // Tts.setDefaultLanguage('en-IE');
-    // Tts.addEventListener('tts-start', event => console.log('start', event));
-    // Tts.addEventListener('tts-finish', event => {console.log('finish', event); setSpeaking(false)});
-    // Tts.addEventListener('tts-cancel', event => console.log('cancel', event));
+    Tts.addEventListener('tts-start', event => console.log('start', event));
+    Tts.addEventListener('tts-finish', event => {console.log('finish', event); setSpeaking(false)});
+    Tts.addEventListener('tts-cancel', event => console.log('cancel', event));
 
 
 
@@ -177,7 +178,7 @@ const HomeScreen = () => {
                 } else {
                   return (
                     <View key={idx} style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                      <View style={{ width: wp(70), backgroundColor: 'white', borderRadius: 6, padding: 4, borderTopEndRadius: 0 }}>
+                      <View style={{ width: wp(70), backgroundColor: 'white', borderRadius: 6, padding: 4, borderTopEndRadius: 0 ,marginVertical:6}}>
                         <Text style={{ fontSize: wp(4), color: 'black' }}>
                           {message.content}
                         </Text>
